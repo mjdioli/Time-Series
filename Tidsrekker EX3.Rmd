@@ -1,0 +1,139 @@
+---
+title: "TMA4285 Ex3"
+author: "Marius Dioli"
+date: "September 9, 2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	error = FALSE,
+	message = FALSE,
+	warning = FALSE,
+	include = FALSE,
+	results = "hold"
+)
+knitr::opts_chunk$set(error=TRUE)
+knitr::opts_chunk$set(warning=FALSE)
+knitr::opts_chunk$set(message=FALSE)
+knitr::opts_chunk$set(results="hold")
+
+```
+
+
+```{r}
+#Imports
+library("knitr") #probably already installed
+library("rmarkdown") #probably already installed
+install.packages('arima')
+install.packages('astsa')
+install.packages('ts')
+```
+
+# Minimum
+
+1. Exploring the data with plotting of relevant statistics
+2. Transforming the data
+3. Model parameter estimation including uncertainty
+4. Diagnostics, and model choice discussion
+
+
+# Plan
+
+
+
+
+
+# Abstract
+
+
+# Introduction
+
+
+
+# Theory
+
+Outline theory. Start by discussing types of data and behaviour of data. Then talk about modelling and assumptions. Onto MA and AR, then ARMA, then ARIMA processes. Estimation and such
+
+# Data Analysis
+```{r}
+#Load data
+daily_c13iso = data.frame(read.csv("/home/marius/Desktop/mlo_station_data_set/daily_flask_c13_mlo.csv"))
+monthly_c13iso = read.csv("/home/marius/Desktop/mlo_station_data_set/monthly_flask_c13_mlo.csv")
+daily_o18iso = read.csv("/home/marius/Desktop/mlo_station_data_set/daily_flask_o18_mlo.csv")
+intermittent_c13iso = read.csv("/home/marius/Desktop/mlo_station_data_set/intermittent_flask_c14_mlo.csv")
+monthly_o18iso = read.csv("/home/marius/Desktop/mlo_station_data_set/monthly_flask_o18_mlo.csv")
+daily_flask = read.csv("/home/marius/Desktop/mlo_station_data_set/daily_flask_co2_mlo.csv")
+monthly_flask = read.csv("/home/marius/Desktop/mlo_station_data_set/monthly_flask_co2_mlo.csv", na.strings=-99.99)
+ten_min_insitu = read.csv("/home/marius/Desktop/mlo_station_data_set/ten_minute_in_situ_co2_mlo.txt")
+daily_insitu = read.csv("/home/marius/Desktop/mlo_station_data_set/daily_in_situ_co2_mlo.csv", comment.char = '%')
+weekly_insitu = read.csv("/home/marius/Desktop/mlo_station_data_set/weekly_in_situ_co2_mlo.csv")
+monthly_insitu = read.csv("/home/marius/Desktop/mlo_station_data_set/monthly_in_situ_co2_mlo.csv")
+
+ten_min_insitu
+#Prep data
+#fixes headers
+names(monthly_flask) = c( "Yr", "Mn", "Date1", "Date2", "CO2","seasonally", "fit",  "seasonally2", "CO2_filled", "seasonally3")
+monthly_flask
+
+#Splitting into two dataframes so that we can delete the NA rows in the non-filled-in data
+monthly_flask1 = monthly_flask
+monthly_flask1[9:10] = list(NULL) 
+
+monthly_flask2 = monthly_flask
+monthly_flask2[5:8] = list(NULL) 
+monthly_flask2
+na.omit(monthly_flask1)
+```
+
+```{r}
+#Creating basic plots
+plot(data.frame(monthly_flask2$Date2, monthly_flask2$CO2_filled), type="o", ylab="CO2 Levels")
+plot(data.frame(monthly_flask1$Date2, monthly_flask1$CO2), type="o", ylab="CO2 Levels")
+plot.ts(monthly_flask2$CO2_filled, type='s')
+
+#Averaging the montly reads so that we have one read per month
+ts = as.ts(monthly_flask2$CO2_filled)
+ts = ts[-1]
+acf(ts, length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
+
+#Definitely not stationary, apply differencing. Since the relationship looks linear we apply a linear filter
+plot(diff(ts), type='o', main='first difference')
+acf(diff(ts), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
+
+#Nope, we should apply two times differncing
+
+
+
+#Looking for non-linear relationships (should be done after we have a stationary time series)
+lag1.plot(ts, 12)
+
+```
+
+```{r}
+#Same as above but for yearly data
+```
+
+
+1. Decompose the data
+2. Look at the individual metrics for each type of data. Especially compare flask vs in situ
+3. Check stationarity and behaviour of autocovariance function
+4. Train model(s) with different parameters. Repeated estimation on simulated data for parameters equal to your estimate gives an alternative to using asymptotic formulas for uncertainty found in the textbook.
+5. Generate predictions
+6. Use MI to fill in missing data and then re-run the tests. It is very likely that the missingness mechanism for the missing data is MCAR since it doesn't make sense that missingness depends on the other factors or on the missing value.
+
+# Discussion
+Scoring model using information criteria due to the scarcity of data (maybe). 
+
+Talk about uncertainty, known unknowns, and unknown unknowns.
+
+Weaknesses of chosen model and alternative models.
+
+# Conclusion
+
+# Appendix
+
+# References
+
