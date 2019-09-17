@@ -27,8 +27,7 @@ knitr::opts_chunk$set(results="hold")
 #Imports
 library("knitr") #probably already installed
 library("rmarkdown") #probably already installed
-library('astsa')
-
+library(astsa)
 ```
 
 # Minimum
@@ -37,12 +36,6 @@ library('astsa')
 2. Transforming the data
 3. Model parameter estimation including uncertainty
 4. Diagnostics, and model choice discussion
-
-
-# Plan
-
-
-
 
 
 # Abstract
@@ -59,7 +52,7 @@ Outline theory. Start by discussing types of data and behaviour of data. Then ta
 # Data Analysis
 ```{r}
 #Load data
-path = "C:/Users/mariu/Documents/Time-Series/mlo_data/"
+path = "mlo_data/"
 daily_c13iso = read.csv(paste(path, "daily_flask_c13_mlo.csv", sep=""))
 monthly_c13iso = read.csv(paste(path, "monthly_flask_c13_mlo.csv", sep=""))
 daily_o18iso = read.csv(paste(path, "daily_flask_o18_mlo.csv", sep=""))
@@ -87,34 +80,19 @@ monthly_flask2[5:8] = list(NULL)
 monthly_flask2
 na.omit(monthly_flask1)
 ```
-
+We start by creating simple time series plot to get an overview. 
 ```{r}
 #Creating basic plots
 plot(data.frame(monthly_flask2$Date2, monthly_flask2$CO2_filled), type="o", ylab="CO2 Levels")
 plot(data.frame(monthly_flask1$Date2, monthly_flask1$CO2), type="o", ylab="CO2 Levels")
 plot.ts(monthly_flask2$CO2_filled, type='s')
-plot.ts(ts, type='s')
-
-
 
 #Averaging the montly reads so that we have one read per month
-ts = as.ts(monthly_flask2$CO2_filled, deltat = 1/12)
+ts = as.ts(monthly_flask2$CO2_filled)
 ts = ts[-1]
-
 acf(ts, length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
 
-#Decomposing using built in r function
-decomp_monthly_flask = decompose(ts, 'additive')
-plot(as.ts(decomp_monthly_flask$seasonal))
-plot(as.ts(decomp_monthly_flask$trend))
-plot(as.ts(decomp_monthly_flask$random))
-plot(decomp_monthly_flask)
-acf(as.ts(decomp_monthly_flask$random[]), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
-stl(ts, "periodic")
-#Definitely not stationary, apply differencing and decomposition and compare results. Since the relationship looks linear we apply a linear filter
-
-
-
+#Definitely not stationary, apply differencing. Since the relationship looks linear we apply a linear filter
 plot(diff(ts), type='o', main='first difference')
 acf(diff(ts), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
 
@@ -123,19 +101,79 @@ acf(diff(ts), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading
 plot(diff(diff(ts)), type='o', main='Second difference')
 acf(diff(diff(ts)), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
 
-#Looking for non-linear relationships (should be done after we have a stationary time series)
-lag1.plot(ts, 12)
+# Seems to be some regular trends, after a few months there are tops in the acf. # maybe there is some seasonal variance repeating each 12 months
+plot(diff(ts, 12), type='o', main='Second difference')
+acf(diff(ts, 12), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
 
+## Seems better, but still is some acf frome earlier months, following the 
+## Sarima way of thinking we can difference some more until it get better
+plot(diff(diff(ts, 12),2), type='o', main='Second difference')
+acf(diff(diff(ts, 12),1), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
+## The autocorrlation now seems ok, we will not make our model to complex, so we ## decide on using the selected values. 
+```
+
+Now plotting the transformed data we get:
+```{r}
+ts.transformed <- diff(diff(ts, 12),2)
+plot(ts.transformed, type = 'o')
+```
+Which seems like a stationary process.  
+
+So we decide on using  $\nabla\nabla^{12}$ as our tranformation. 
+
+Which results in a SARIMA model. As for instance:
+```{r}
+sarima(ts, p=1, d=1, q=1, P=1, Q=1, D=1, S=12)
+```
+(Coefficient can i.e. be fit using innovations algoritihm. But that might not be the method impletemented in the package).
+To find the best choice of parameters we compare AIC and AICC of different models. 
+
+```{r}
+minVal.AIC <- c(10000,1,1,1,1)
+minVal.AICC <- c(10000,1,1,1,1)
+minVal.BIC <- c(10000,1,1,1,1)
+errorAt <- c()
+for(p1 in 4:5){
+  for(q1 in 1:5){
+    for(P1 in 1:5){
+      for(Q1 in 1:5){
+        mod <- tryCatch(sarima(ts, p=p1, d=1, q=q1, P=P1, D=1, S=12, Q = Q1, no.constant = T, tol = 1e-3),
+                 error = function(e) "ERROR")
+        if(mod == "ERROR"){
+          errorAt <- append(errorAt, c(p1, q1, P1, Q1))
+          next
+        }
+        if(mod$AIC < minVal.AIC[1]){
+          minVal.AIC <- c(mod$AIC, p1, q1, P1, Q1)
+        }
+        if(mod$AICc < minVal.AICC[1]){
+          minVal.AICC <- c(mod$AICc, p1, q1, P1, Q1)
+        }
+        if(mod$BIC < minVal.BIC[1]){
+          minVal.BIC <- c(mod$BIC, p1, q1, P1, Q1)
+        }
+        
+      }
+    }
+  }
+}
+# 4 1 5 1 seems to be best with 1.27 AIC and 1.27 AICC 
 ```
 
 ```{r}
-#Applying arma and arima model
-
-
+mod <- sarima(ts, p=4, d=1, q=1, P=5, Q=1, D=1, S=12)
+mod
 ```
 
 
 
+
+1. Decompose the data
+2. Look at the individual metrics for each type of data. Especially compare flask vs in situ
+3. Check stationarity and behaviour of autocovariance function
+4. Train model(s) with different parameters. Repeated estimation on simulated data for parameters equal to your estimate gives an alternative to using asymptotic formulas for uncertainty found in the textbook.
+5. Generate predictions
+6. Use MI to fill in missing data and then re-run the tests. It is very likely that the missingness mechanism for the missing data is MCAR since it doesn't make sense that missingness depends on the other factors or on the missing value.
 
 # Discussion
 Scoring model using information criteria due to the scarcity of data (maybe). 
