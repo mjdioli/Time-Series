@@ -98,9 +98,9 @@ plot.ts(ts, type='s')
 
 
 #Averaging the montly reads so that we have one read per month
-ts = ts(monthly_flask2$CO2_filled, deltat = 1/12)
-
+ts = as.ts(monthly_flask2$CO2_filled, deltat = 1/12)
 ts = ts[-1]
+
 acf(ts, length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
 
 #Decomposing using built in r function
@@ -109,7 +109,7 @@ plot(as.ts(decomp_monthly_flask$seasonal))
 plot(as.ts(decomp_monthly_flask$trend))
 plot(as.ts(decomp_monthly_flask$random))
 plot(decomp_monthly_flask)
-acf(as.ts(decomp_monthly_flask$random), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
+acf(as.ts(decomp_monthly_flask$random[]), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
 stl(ts, "periodic")
 #Definitely not stationary, apply differencing and decomposition and compare results. Since the relationship looks linear we apply a linear filter
 
@@ -135,12 +135,7 @@ lag1.plot(ts, 12)
 ```
 
 
-1. Decompose the data
-2. Look at the individual metrics for each type of data. Especially compare flask vs in situ
-3. Check stationarity and behaviour of autocovariance function
-4. Train model(s) with different parameters. Repeated estimation on simulated data for parameters equal to your estimate gives an alternative to using asymptotic formulas for uncertainty found in the textbook.
-5. Generate predictions
-6. Use MI to fill in missing data and then re-run the tests. It is very likely that the missingness mechanism for the missing data is MCAR since it doesn't make sense that missingness depends on the other factors or on the missing value.
+
 
 # Discussion
 Scoring model using information criteria due to the scarcity of data (maybe). 
