@@ -93,13 +93,28 @@ na.omit(monthly_flask1)
 plot(data.frame(monthly_flask2$Date2, monthly_flask2$CO2_filled), type="o", ylab="CO2 Levels")
 plot(data.frame(monthly_flask1$Date2, monthly_flask1$CO2), type="o", ylab="CO2 Levels")
 plot.ts(monthly_flask2$CO2_filled, type='s')
+plot.ts(ts, type='s')
+
+
 
 #Averaging the montly reads so that we have one read per month
-ts = as.ts(monthly_flask2$CO2_filled)
+ts = ts(monthly_flask2$CO2_filled, deltat = 1/12)
+
 ts = ts[-1]
 acf(ts, length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
 
-#Definitely not stationary, apply differencing. Since the relationship looks linear we apply a linear filter
+#Decomposing using built in r function
+decomp_monthly_flask = decompose(ts, 'additive')
+plot(as.ts(decomp_monthly_flask$seasonal))
+plot(as.ts(decomp_monthly_flask$trend))
+plot(as.ts(decomp_monthly_flask$random))
+plot(decomp_monthly_flask)
+acf(as.ts(decomp_monthly_flask$random), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
+stl(ts, "periodic")
+#Definitely not stationary, apply differencing and decomposition and compare results. Since the relationship looks linear we apply a linear filter
+
+
+
 plot(diff(ts), type='o', main='first difference')
 acf(diff(ts), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
 
@@ -114,7 +129,9 @@ lag1.plot(ts, 12)
 ```
 
 ```{r}
-#Same as above but for yearly data
+#Applying arma and arima model
+
+
 ```
 
 
