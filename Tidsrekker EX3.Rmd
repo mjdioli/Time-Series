@@ -27,9 +27,8 @@ knitr::opts_chunk$set(results="hold")
 #Imports
 library("knitr") #probably already installed
 library("rmarkdown") #probably already installed
-install.packages('arima')
-install.packages('astsa')
-install.packages('ts')
+library('astsa')
+
 ```
 
 # Minimum
@@ -60,17 +59,18 @@ Outline theory. Start by discussing types of data and behaviour of data. Then ta
 # Data Analysis
 ```{r}
 #Load data
-daily_c13iso = data.frame(read.csv("/home/marius/Desktop/mlo_station_data_set/daily_flask_c13_mlo.csv"))
-monthly_c13iso = read.csv("/home/marius/Desktop/mlo_station_data_set/monthly_flask_c13_mlo.csv")
-daily_o18iso = read.csv("/home/marius/Desktop/mlo_station_data_set/daily_flask_o18_mlo.csv")
-intermittent_c13iso = read.csv("/home/marius/Desktop/mlo_station_data_set/intermittent_flask_c14_mlo.csv")
-monthly_o18iso = read.csv("/home/marius/Desktop/mlo_station_data_set/monthly_flask_o18_mlo.csv")
-daily_flask = read.csv("/home/marius/Desktop/mlo_station_data_set/daily_flask_co2_mlo.csv")
-monthly_flask = read.csv("/home/marius/Desktop/mlo_station_data_set/monthly_flask_co2_mlo.csv", na.strings=-99.99)
-ten_min_insitu = read.csv("/home/marius/Desktop/mlo_station_data_set/ten_minute_in_situ_co2_mlo.txt")
-daily_insitu = read.csv("/home/marius/Desktop/mlo_station_data_set/daily_in_situ_co2_mlo.csv", comment.char = '%')
-weekly_insitu = read.csv("/home/marius/Desktop/mlo_station_data_set/weekly_in_situ_co2_mlo.csv")
-monthly_insitu = read.csv("/home/marius/Desktop/mlo_station_data_set/monthly_in_situ_co2_mlo.csv")
+path = "C:/Users/mariu/Documents/Time-Series/mlo_data/"
+daily_c13iso = read.csv(paste(path, "daily_flask_c13_mlo.csv", sep=""))
+monthly_c13iso = read.csv(paste(path, "monthly_flask_c13_mlo.csv", sep=""))
+daily_o18iso = read.csv(paste(path, "daily_flask_o18_mlo.csv", sep=""))
+intermittent_c13iso = read.csv(paste(path, "intermittent_flask_c14_mlo.csv", sep=""))
+monthly_o18iso = read.csv(paste(path, "monthly_flask_o18_mlo.csv", sep=""))
+daily_flask = read.csv(paste(path, "daily_flask_co2_mlo.csv", sep=""))
+monthly_flask = read.csv(paste(path, "monthly_flask_co2_mlo.csv", sep=""), na.strings=-99.99)
+ten_min_insitu = read.csv(paste(path, "ten_minute_in_situ_co2_mlo.txt", sep=""))
+daily_insitu = read.csv(paste(path, "daily_in_situ_co2_mlo.csv", sep=""), comment.char = '%')
+weekly_insitu = read.csv(paste(path, "weekly_in_situ_co2_mlo.csv", sep=""))
+monthly_insitu = read.csv(paste(path, "monthly_in_situ_co2_mlo.csv", sep=""))
 
 ten_min_insitu
 #Prep data
@@ -105,7 +105,8 @@ acf(diff(ts), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading
 
 #Nope, we should apply two times differncing
 
-
+plot(diff(diff(ts)), type='o', main='Second difference')
+acf(diff(diff(ts)), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
 
 #Looking for non-linear relationships (should be done after we have a stationary time series)
 lag1.plot(ts, 12)
