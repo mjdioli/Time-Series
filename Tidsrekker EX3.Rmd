@@ -124,6 +124,7 @@ So we decide on using  $\nabla\nabla^{12}$ as our tranformation.
 Which results in a SARIMA model. As for instance:
 ```{r}
 sarima(ts, p=1, d=1, q=1, P=1, Q=1, D=1, S=12)
+#test
 ```
 (Coefficient can i.e. be fit using innovations algoritihm. But that might not be the method impletemented in the package).
 To find the best choice of parameters we compare AIC and AICC of different models. 
