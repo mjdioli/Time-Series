@@ -53,22 +53,22 @@ Outline theory. Start by discussing types of data and behaviour of data. Then ta
 ```{r}
 #Load data
 path = "mlo_data/"
-daily_c13iso = read.csv(paste(path, "daily_flask_c13_mlo.csv", sep=""))
-monthly_c13iso = read.csv(paste(path, "monthly_flask_c13_mlo.csv", sep=""))
-daily_o18iso = read.csv(paste(path, "daily_flask_o18_mlo.csv", sep=""))
-intermittent_c13iso = read.csv(paste(path, "intermittent_flask_c14_mlo.csv", sep=""))
-monthly_o18iso = read.csv(paste(path, "monthly_flask_o18_mlo.csv", sep=""))
-daily_flask = read.csv(paste(path, "daily_flask_co2_mlo.csv", sep=""))
-monthly_flask = read.csv(paste(path, "monthly_flask_co2_mlo.csv", sep=""), na.strings=-99.99)
-ten_min_insitu = read.csv(paste(path, "ten_minute_in_situ_co2_mlo.txt", sep=""))
-daily_insitu = read.csv(paste(path, "daily_in_situ_co2_mlo.csv", sep=""), comment.char = '%')
-weekly_insitu = read.csv(paste(path, "weekly_in_situ_co2_mlo.csv", sep=""))
-monthly_insitu = read.csv(paste(path, "monthly_in_situ_co2_mlo.csv", sep=""))
+marius_path = "C:/Users/mariu/Documents/Time-Series/mlo_data/"
+daily_c13iso = read.csv(paste(marius_path, "daily_flask_c13_mlo.csv", sep=""), na.strings=-99.99)
+monthly_c13iso = read.csv(paste(marius_path, "monthly_flask_c13_mlo.csv", sep=""), na.strings=-99.99)
+daily_o18iso = read.csv(paste(marius_path, "daily_flask_o18_mlo.csv", sep=""), na.strings=-99.99)
+intermittent_c13iso = read.csv(paste(marius_path, "intermittent_flask_c14_mlo.csv", sep=""), na.strings=-99.99)
+monthly_o18iso = read.csv(paste(marius_path, "monthly_flask_o18_mlo.csv", sep=""), na.strings=-99.99)
+daily_flask = read.csv(paste(marius_path, "daily_flask_co2_mlo.csv", sep=""), na.strings=-99.99)
+monthly_flask = read.csv(paste(marius_path, "monthly_flask_co2_mlo.csv", sep=""), na.strings=-99.99)
+ten_min_insitu = read.csv(paste(marius_path, "ten_minute_in_situ_co2_mlo.txt", sep=""), na.strings=-99.99)
+daily_insitu = read.csv(paste(marius_path, "daily_in_situ_co2_mlo.csv", sep=""), comment.char = '%', na.strings=-99.99)
+weekly_insitu = read.csv(paste(marius_path, "weekly_in_situ_co2_mlo.csv", sep=""), na.strings=-99.99)
+monthly_insitu = read.csv(paste(marius_path, "monthly_in_situ_co2_mlo.csv", sep=""), na.strings=-99.99)
 
 
 #fixes headers
 names(monthly_flask) = c( "Yr", "Mn", "Date1", "Date2", "CO2","seasonally", "fit",  "seasonally2", "CO2_filled", "seasonally3")
-monthly_flask
 
 #Splitting into two dataframes so that we can delete the NA rows in the non-filled-in data
 monthly_flask1 = monthly_flask
@@ -76,7 +76,6 @@ monthly_flask1[9:10] = list(NULL)
 
 monthly_flask2 = monthly_flask
 monthly_flask2[5:8] = list(NULL) 
-monthly_flask2
 na.omit(monthly_flask1)
 ```
 We start by creating simple time series plot to get an overview. 
@@ -86,19 +85,20 @@ plot(data.frame(monthly_flask2$Date2, monthly_flask2$CO2_filled), type="o", ylab
 plot(data.frame(monthly_flask1$Date2, monthly_flask1$CO2), type="o", ylab="CO2 Levels")
 plot.ts(monthly_flask2$CO2_filled, type='s')
 
-#Averaging the montly reads so that we have one read per month
-ts = as.ts(monthly_flask2$CO2_filled, deltat=1/12)
+#Converting to timeseries
+ts = as.ts(monthly_flask2$CO2_filled, deltat = 1/12)
+'?'(ts)
 ts = ts[-1]
-acf(ts, length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
+acf(ts, 100, main='Monthly CO2 flask reading')
 
-#Definitely not stationary, apply differencing. Since the relationship looks linear we apply a linear filter
+#Definitely not stationary, apply differencing. The book states that differencing is a more robust method than decomposition
 plot(diff(ts, 12), type='o', main='first difference')
-acf(diff(ts, 12), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
+acf(diff(ts, 12), 100, main='Monthly CO2 flask reading')
 
 #Nope, we should apply two times differncing
 
 plot(diff(diff(ts, 12)), type='o', main='Second difference')
-acf(diff(diff(ts, 12)), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
+acf(diff(diff(ts, 12)),100, main='Monthly CO2 flask reading')
 
 # Seems to be some regular trends, after a few months there are tops in the acf. # maybe there is some seasonal variance repeating each 12 months
 plot(diff(ts, 12), type='o', main='Second difference')
@@ -106,9 +106,9 @@ acf(diff(ts, 12), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask rea
 
 ## Seems better, but still is some acf frome earlier months, following the 
 ## Sarima way of thinking we can difference some more until it get better
-plot(diff(diff(ts, 12),2), type='o', main='Second difference')
-acf(diff(diff(ts, 12),1), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
-pacf(diff(diff(ts, 12),1), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
+plot(diff(diff(ts, 12),1), type='o', main='Second difference')
+acf(diff(diff(ts, 12),1), main='Monthly CO2 flask reading')
+pacf(diff(diff(ts, 12),1), main='Monthly CO2 flask reading')
 
 #Based on the fact that both the acf and pacf function tail off, we conclude that an arma style model fits best, in this case a sarima model.
 
@@ -196,6 +196,52 @@ xx = c(time(U), rev(time(U))); yy = c(L, rev(U))
 polygon(xx, yy, border = 8, col = gray(.6, alpha =.2)) 
 lines(fore$pred, type="p", col=2)
 ```
+
+Now let us explore the remaining data.
+```{r}
+#Monthly in situ
+names(monthly_insitu) = c( "Yr", "Mn", "Date1", "Date2", "CO2","seasonally", "fit",  "seasonally2", "CO2_filled", "seasonally3")
+
+#Plots
+ts_monthly_insitu = as.ts(na.omit(monthly_insitu$CO2_filled), deltat=1/12)
+plot.ts(monthly_insitu$CO2_filled, type='s')
+acf2(ts)
+acf(ts)
+
+#differencing
+x = acf2(diff(ts, 12))
+acf2(diff(diff(ts,12),1))
+
+'?'(acf)
+
+#Daily flask and insitu
+names(daily_flask) = c("Date1", "Date2", "Date3","Date4", "Number_of_flasks", "Flags", "CO2")
+names(daily_insitu) = c("Yr", "Mn", "Dy", "CO2", "NB", "Scale")
+daily_insitu
+
+ts_daily_flask = as.ts(na.omit(daily_flask$CO2), deltat=1/365)
+ts_daily_insitu = as.ts(na.omit(daily_insitu$CO2), deltat=1/365)
+plot.ts(ts_daily_flask, type='s')
+plot.ts(ts_daily_insitu, type='s')
+
+#Insitu lacks outliers
+#Differencing and acf
+acf2(ts_daily_flask)
+acf2(ts_daily_insitu)
+
+#First difference
+acf2(diff(ts_daily_flask))
+acf2(diff(ts_daily_insitu))
+
+
+'?'(acf)
+#Second difference
+acf2(diff(diff(ts_daily_flask)))
+acf2(diff(diff(ts_daily_insitu)))
+
+#Single differencing seems better than double
+```
+
 
 
 # Discussion
