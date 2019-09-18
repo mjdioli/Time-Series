@@ -65,8 +65,7 @@ daily_insitu = read.csv(paste(path, "daily_in_situ_co2_mlo.csv", sep=""), commen
 weekly_insitu = read.csv(paste(path, "weekly_in_situ_co2_mlo.csv", sep=""))
 monthly_insitu = read.csv(paste(path, "monthly_in_situ_co2_mlo.csv", sep=""))
 
-ten_min_insitu
-#Prep data
+
 #fixes headers
 names(monthly_flask) = c( "Yr", "Mn", "Date1", "Date2", "CO2","seasonally", "fit",  "seasonally2", "CO2_filled", "seasonally3")
 monthly_flask
@@ -88,18 +87,18 @@ plot(data.frame(monthly_flask1$Date2, monthly_flask1$CO2), type="o", ylab="CO2 L
 plot.ts(monthly_flask2$CO2_filled, type='s')
 
 #Averaging the montly reads so that we have one read per month
-ts = as.ts(monthly_flask2$CO2_filled)
+ts = as.ts(monthly_flask2$CO2_filled, deltat=1/12)
 ts = ts[-1]
 acf(ts, length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
 
 #Definitely not stationary, apply differencing. Since the relationship looks linear we apply a linear filter
-plot(diff(ts), type='o', main='first difference')
-acf(diff(ts), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
+plot(diff(ts, 12), type='o', main='first difference')
+acf(diff(ts, 12), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
 
 #Nope, we should apply two times differncing
 
-plot(diff(diff(ts)), type='o', main='Second difference')
-acf(diff(diff(ts)), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
+plot(diff(diff(ts, 12)), type='o', main='Second difference')
+acf(diff(diff(ts, 12)), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
 
 # Seems to be some regular trends, after a few months there are tops in the acf. # maybe there is some seasonal variance repeating each 12 months
 plot(diff(ts, 12), type='o', main='Second difference')
@@ -109,6 +108,10 @@ acf(diff(ts, 12), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask rea
 ## Sarima way of thinking we can difference some more until it get better
 plot(diff(diff(ts, 12),2), type='o', main='Second difference')
 acf(diff(diff(ts, 12),1), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
+pacf(diff(diff(ts, 12),1), length(monthly_flask2$CO2_filled), main='Monthly CO2 flask reading')
+
+#Based on the fact that both the acf and pacf function tail off, we conclude that an arma style model fits best, in this case a sarima model.
+
 ## The autocorrlation now seems ok, we will not make our model to complex, so we ## decide on using the selected values. 
 ```
 
@@ -163,22 +166,32 @@ for(p1 in 4:5){
 
 ```{r}
 mod <- sarima(ts, p=4, d=1, q=1, P=5, Q=1, D=1, S=12)
-mod
+mod$ttable
+```
+
+```{r}
+#Confidence intervals
+#Since we have a large sample size we can use a normal approximation to calculate the confidence intervals to be the estimate plus/minus 
+# their estimate/1.96*their standard deviation
+ci = c()
+for(i in 1:11){
+  upper = mod$ttable[i, 1] + 1.96*mod$ttable[i, 2]
+  lower = mod$ttable[i, 1] - 1.96*mod$ttable[i, 2]
+  ci = rbind(ci, c(mod$ttable[i, 1], lower, upper))
+}
+ci = as.data.frame(ci)
+names(ci) = c("Estimate", "Lower bound", "Upper bound")
+ci
+
 ```
 
 
+```{r}
+#Predictions
+```
 
-
-1. Decompose the data
-2. Look at the individual metrics for each type of data. Especially compare flask vs in situ
-3. Check stationarity and behaviour of autocovariance function
-4. Train model(s) with different parameters. Repeated estimation on simulated data for parameters equal to your estimate gives an alternative to using asymptotic formulas for uncertainty found in the textbook.
-5. Generate predictions
-6. Use MI to fill in missing data and then re-run the tests. It is very likely that the missingness mechanism for the missing data is MCAR since it doesn't make sense that missingness depends on the other factors or on the missing value.
 
 # Discussion
-Scoring model using information criteria due to the scarcity of data (maybe). 
-
 Talk about uncertainty, known unknowns, and unknown unknowns.
 
 Weaknesses of chosen model and alternative models.
