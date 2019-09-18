@@ -188,6 +188,13 @@ ci
 
 ```{r}
 #Predictions
+fore = predict(mod$fit, n.ahead=300)
+forecast = append(ts, fore$pred)
+ts.plot(ts, xlim=c(0,1000), ylim=c(310, 500), ylab="Monthly CO2")
+U = fore$pred+fore$se; L = fore$pred-fore$se 
+xx = c(time(U), rev(time(U))); yy = c(L, rev(U)) 
+polygon(xx, yy, border = 8, col = gray(.6, alpha =.2)) 
+lines(fore$pred, type="p", col=2)
 ```
 
 
