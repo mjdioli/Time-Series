@@ -68,7 +68,20 @@ monthly_insitu = read.csv(paste(marius_path, "monthly_in_situ_co2_mlo.csv", sep=
 
 
 #fixes headers
+names(intermittent_c13iso) = c("Date", "C13")
 names(monthly_flask) = c( "Yr", "Mn", "Date1", "Date2", "CO2","seasonally", "fit",  "seasonally2", "CO2_filled", "seasonally3")
+names(monthly_insitu) = c( "Yr", "Mn", "Date1", "Date2", "CO2","seasonally", "fit",  "seasonally2", "CO2_filled", "seasonally3")
+names(monthly_c13iso) = c( "Yr", "Mn", "Date1", "Date2", "C13","seasonally", "fit",  "seasonally2", "C13_filled", "seasonally3")
+names(monthly_o18iso) = c( "Yr", "Mn", "Date1", "Date2", "O18","seasonally", "fit",  "seasonally2", "O18_filled", "seasonally3")
+names(weekly_insitu) = c("Date", "CO2")
+names(daily_flask) = c("Date1", "Date2", "Date3","Date4", "Number_of_flasks", "Flags", "CO2")
+names(daily_insitu) = c("Yr", "Mn", "Dy", "CO2", "NB", "Scale")
+names(daily_c13iso) = c("Date1", "Date2", "Date3","Date4", "Number_of_flasks", "Flags", "C13")
+names(daily_o18iso) = c("Date1", "Date2", "Date3","Date4", "Number_of_flasks", "Flags", "O18")
+names(tenten_min_insitu) = c('Yr','Mn','Dy','Hr','Mi', 'CO2')
+
+
+
 
 #Splitting into two dataframes so that we can delete the NA rows in the non-filled-in data
 monthly_flask1 = monthly_flask
@@ -126,7 +139,7 @@ So we decide on using  $\nabla\nabla^{12}$ as our tranformation.
 
 Which results in a SARIMA model. As for instance:
 ```{r}
-sarima(ts, p=1, d=2, q=1, P=1, Q=1, D=1, S=12)
+sarima(ts, p=1, d=2, q=1, P=1, Q=1, D=2, S=12)
 #test
 '?'(sarima)
 ```
@@ -142,7 +155,7 @@ for(p1 in 4:5){
   for(q1 in 1:5){
     for(P1 in 1:5){
       for(Q1 in 1:5){
-        mod <- tryCatch(sarima(ts, p=p1, d=2, q=q1, P=P1, D=1, S=12, Q = Q1, no.constant = T, tol = 1e-3),
+        mod <- tryCatch(sarima(ts, p=p1, d=2, q=q1, P=P1, D=2, S=12, Q = Q1, no.constant = T, tol = 1e-3),
                  error = function(e) "ERROR")
         if(mod == "ERROR"){
           errorAt <- append(errorAt, c(p1, q1, P1, Q1))
@@ -162,6 +175,7 @@ for(p1 in 4:5){
     }
   }
 }
+minVal.AICC
 # 4 1 5 1 seems to be best with 1.27 AIC and 1.27 AICC 
 ```
 
@@ -201,7 +215,6 @@ lines(fore$pred, type="p", col=2)
 Now let us explore the remaining data.
 ```{r}
 #Monthly in situ
-names(monthly_insitu) = c( "Yr", "Mn", "Date1", "Date2", "CO2","seasonally", "fit",  "seasonally2", "CO2_filled", "seasonally3")
 
 #Plots
 ts_monthly_insitu = as.ts(na.omit(monthly_insitu$CO2_filled), deltat=1/12)
@@ -214,11 +227,9 @@ x = acf2(diff(ts, 12))
 acf2(diff(diff(ts,12),1))
 
 '?'(acf)
+'?'(diff)
 
 #Daily flask and insitu
-names(daily_flask) = c("Date1", "Date2", "Date3","Date4", "Number_of_flasks", "Flags", "CO2")
-names(daily_insitu) = c("Yr", "Mn", "Dy", "CO2", "NB", "Scale")
-daily_insitu
 
 ts_daily_flask = as.ts(na.omit(daily_flask$CO2), deltat=1/365)
 ts_daily_insitu = as.ts(na.omit(daily_insitu$CO2), deltat=1/365)
@@ -241,6 +252,23 @@ acf2(diff(diff(ts_daily_flask)))
 acf2(diff(diff(ts_daily_insitu)))
 
 #Single differencing seems better than double
+```
+
+```{r}
+#Creating function that makes all the necessary plots
+
+function(timeseries, first_diff){
+  plot.ts(timeseries, type='s')
+  acf2(timeseries)
+  
+  #First differencing
+  plot.ts(diff(timeseries, first_diff), type='s')
+  acf2(diff(timeseries, first_diff))
+  
+  #Second differencing
+  plot.ts(diff(diff(timeseries)), type='s')
+  acf2(diff(diff(timeseries)))
+}
 ```
 
 
