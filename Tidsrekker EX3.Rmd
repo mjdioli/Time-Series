@@ -126,8 +126,9 @@ So we decide on using  $\nabla\nabla^{12}$ as our tranformation.
 
 Which results in a SARIMA model. As for instance:
 ```{r}
-sarima(ts, p=1, d=1, q=1, P=1, Q=1, D=1, S=12)
+sarima(ts, p=1, d=2, q=1, P=1, Q=1, D=1, S=12)
 #test
+'?'(sarima)
 ```
 (Coefficient can i.e. be fit using innovations algoritihm. But that might not be the method impletemented in the package).
 To find the best choice of parameters we compare AIC and AICC of different models. 
@@ -141,7 +142,7 @@ for(p1 in 4:5){
   for(q1 in 1:5){
     for(P1 in 1:5){
       for(Q1 in 1:5){
-        mod <- tryCatch(sarima(ts, p=p1, d=1, q=q1, P=P1, D=1, S=12, Q = Q1, no.constant = T, tol = 1e-3),
+        mod <- tryCatch(sarima(ts, p=p1, d=2, q=q1, P=P1, D=1, S=12, Q = Q1, no.constant = T, tol = 1e-3),
                  error = function(e) "ERROR")
         if(mod == "ERROR"){
           errorAt <- append(errorAt, c(p1, q1, P1, Q1))
@@ -165,7 +166,7 @@ for(p1 in 4:5){
 ```
 
 ```{r}
-mod <- sarima(ts, p=4, d=1, q=1, P=5, Q=1, D=1, S=12)
+mod <- sarima(ts, p=4, d=2, q=1, P=5, Q=1, D=1, S=12)
 mod$ttable
 ```
 
@@ -230,7 +231,7 @@ acf2(ts_daily_flask)
 acf2(ts_daily_insitu)
 
 #First difference
-acf2(diff(ts_daily_flask))
+acf2(diff(ts_daily_flask, 365))
 acf2(diff(ts_daily_insitu))
 
 
