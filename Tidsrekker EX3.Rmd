@@ -180,7 +180,7 @@ minVal.AICC
 ```
 
 ```{r}
-mod <- sarima(ts, p=4, d=2, q=1, P=5, Q=1, D=1, S=12)
+mod <- sarima(ts, p=4, d=2, q=1, P=5, Q=1, D=2, S=12)
 mod$ttable
 ```
 
@@ -210,6 +210,8 @@ U = fore$pred+fore$se; L = fore$pred-fore$se
 xx = c(time(U), rev(time(U))); yy = c(L, rev(U)) 
 polygon(xx, yy, border = 8, col = gray(.6, alpha =.2)) 
 lines(fore$pred, type="p", col=2)
+'?'(lines)
+install.packages('ggplot2')
 ```
 
 Now let us explore the remaining data.
@@ -254,14 +256,24 @@ acf2(diff(diff(ts_daily_insitu, 365)))
 
 #C13
 plotter(as.ts(monthly_c13iso$C13_filled, 12), 12)
+plotter(as.ts(daily_c13iso$C13, 365), 365)
 
 #O18
 plotter(as.ts(monthly_o18iso$O18, 12), 12)
+plotter(as.ts(daily_o18iso$O18, 365), 365)
+
+#Weekly
+plotter(as.ts(weekly_insitu$CO2, 52), 52)
+
+#Ten minutes
+plotter(as.ts(ten_min_insitu$CO2, 525600), 525600)
+
+#Intermittent
+plotter(as.ts(intermittent_c13iso$C13, 8), 8)
 ```
 
 ```{r}
 #Creating function that makes all the necessary plots
-
 plotter = function(timeseries, first_diff){
   plot.ts(timeseries, type='s')
   acf2(timeseries)
@@ -284,6 +296,8 @@ Clean up and prettify things, though probs not really necessary
 
 
 # Discussion
+
+We see from the analysis that none of the time series are stationary. However, ...
 Talk about uncertainty, known unknowns, and unknown unknowns.
 
 Weaknesses of chosen model and alternative models.
