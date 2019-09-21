@@ -315,7 +315,7 @@ We see that models trained on the different kinds of monthly data yield AICC sco
 
 Since our data was non-stationary, an ARIMA model seemed appropriate. Our data displays a clear seasonal pattern. The earth's ecosystem in general, and weather in particular, are seasonal, and it is reasonable to assume that co2 levels at a measuring station is correlated with changing weather. Therefore, a model that takes this into account is suitable, leading to our choice of a SARIMA model. Selecting the parameters for our model is done by testing all combinations of parameter values up to 5 and then picking the one with the smallest AICC score. It would seem intuitive to some to set very high values for our paramters to take into account large numbers of past states, but this would lead to an overly complex model and overfitting. It is therefore prudent to explore parameters including only a few previous states in the model.
 
-Drawbacks of this approach are that... Estiamting the error on future states is of course highly uncertain in and of itself.
+Drawbacks of this approach are that...
 
 Our model seems quite robust when inspecting various statistics. The normal QQ plot has only slight deviations at the tails. The standardized residuals appear staionary, and the p values for the Ljung-Box statistic suggest a good fit. The earth's atmosphere is a large enough system that any changes in the trend of CO2 will be gradual, barring some major event. Therefore we would expect accurate predictions a few years into the futre, with decreasing certainty at the 5 years and further out in the future. This seems to be the case in our model.
 
