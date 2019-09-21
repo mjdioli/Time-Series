@@ -141,12 +141,13 @@ Which results in a SARIMA model. As for instance:
 ```{r}
 sarima(ts, p=1, d=2, q=1, P=1, Q=1, D=2, S=12)
 #test
-'?'(sarima)
+
 ```
 (Coefficient can i.e. be fit using innovations algoritihm. But that might not be the method impletemented in the package).
 To find the best choice of parameters we compare AIC and AICC of different models. 
 
 ```{r}
+optimal_sarima = function(timeseries){
 minVal.AIC <- c(10000,1,1,1,1)
 minVal.AICC <- c(10000,1,1,1,1)
 minVal.BIC <- c(10000,1,1,1,1)
@@ -175,7 +176,8 @@ for(p1 in 4:5){
     }
   }
 }
-minVal.AICC
+return(minVal.AICC)
+}
 # 4 1 5 1 seems to be best with 1.27 AIC and 1.27 AICC 
 ```
 
@@ -209,10 +211,10 @@ ts.plot(ts, xlim=c(0,1000), ylim=c(310, 500), ylab="Monthly CO2")
 U = fore$pred+fore$se; L = fore$pred-fore$se 
 xx = c(time(U), rev(time(U))); yy = c(L, rev(U)) 
 polygon(xx, yy, border = 8, col = gray(.6, alpha =.2)) 
-lines(fore$pred, type="p", col=2)
-'?'(lines)
-install.packages('ggplot2')
+lines(fore$pred, col=2)
 ```
+
+We see that the SARIMA generates a reasonable prediction.
 
 Now let us explore the remaining data.
 ```{r}
@@ -255,22 +257,29 @@ acf2(diff(diff(ts_daily_insitu, 365)))
 
 
 #C13
-plotter(as.ts(monthly_c13iso$C13_filled, 12), 12)
-plotter(as.ts(daily_c13iso$C13, 365), 365)
+plotter(as.ts(monthly_c13iso$C13_filled, deltat=1/12), 12)
+plotter(as.ts(daily_c13iso$C13, deltat=1/365), 365)
 
 #O18
-plotter(as.ts(monthly_o18iso$O18, 12), 12)
-plotter(as.ts(daily_o18iso$O18, 365), 365)
+plotter(as.ts(monthly_o18iso$O18, deltat=1/12), 12)
+plotter(as.ts(daily_o18iso$O18, deltat=1/365), 365)
 
 #Weekly
-plotter(as.ts(weekly_insitu$CO2, 52), 52)
+plotter(as.ts(weekly_insitu$CO2, deltat=1/52), 52)
 
 #Ten minutes
-plotter(as.ts(ten_min_insitu$CO2, 525600), 525600)
+plotter(as.ts(ten_min_insitu$CO2, deltat=1/525600), 525600)
 
 #Intermittent
-plotter(as.ts(intermittent_c13iso$C13, 8), 8)
+plotter(as.ts(intermittent_c13iso$C13, deltat=1/8), 8)
+
+
+
+#test
+
 ```
+We see that the data look broadly the same
+
 
 ```{r}
 #Creating function that makes all the necessary plots
