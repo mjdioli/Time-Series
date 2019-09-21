@@ -106,12 +106,13 @@ acf(ts, 100, main='Monthly CO2 flask reading')
 
 #Definitely not stationary, apply differencing. The book states that differencing is a more robust method than decomposition
 plot(diff(ts, 12), type='o', main='first difference')
-acf(diff(ts, 12), 100, main='Monthly CO2 flask reading')
+acf2(diff(ts, 12), 100, main='Monthly CO2 flask reading')
 
 #Nope, we should apply two times differncing
 
 plot(diff(diff(ts, 12)), type='o', main='Second difference')
-acf(diff(diff(ts, 12)),100, main='Monthly CO2 flask reading')
+acf2(diff(diff(ts, 12)), main='Monthly CO2 flask reading')
+
 
 # Seems to be some regular trends, after a few months there are tops in the acf. # maybe there is some seasonal variance repeating each 12 months
 plot(diff(ts, 12), type='o', main='Second difference')
@@ -204,14 +205,20 @@ ci
 
 
 ```{r}
+
 #Predictions
+pred_plot=function(model_fit, original_timeseries, y_label){
+  
 fore = predict(mod$fit, n.ahead=300)
-forecast = append(ts, fore$pred)
-ts.plot(ts, xlim=c(0,1000), ylim=c(310, 500), ylab="Monthly CO2")
+forecast = append(original_timeseries, fore$pred)
+ts.plot(original_timeseries, xlim=c(0,1000), ylim=c(310, 500), ylab=y_label)
 U = fore$pred+fore$se; L = fore$pred-fore$se 
 xx = c(time(U), rev(time(U))); yy = c(L, rev(U)) 
 polygon(xx, yy, border = 8, col = gray(.6, alpha =.2)) 
 lines(fore$pred, col=2)
+}
+
+pred_plot(mod$fit, ts, 'Monthly CO2')
 ```
 
 We see that the SARIMA generates a reasonable prediction.
@@ -222,17 +229,8 @@ Now let us explore the remaining data.
 
 #Plots
 ts_monthly_insitu = as.ts(na.omit(monthly_insitu$CO2_filled), deltat=1/12)
-plot.ts(monthly_insitu$CO2_filled, type='s')
-acf2(ts)
-acf(ts)
-
-#differencing
-x = acf2(diff(ts, 12))
-acf2(diff(diff(ts,12),1))
-
-'?'(acf)
-'?'(diff)
-
+plotter(ts_monthly_insitu, 12)
+plotter(ts, 12)
 #Daily flask and insitu
 
 ts_daily_flask = as.ts(na.omit(daily_flask$CO2), deltat=1/365)
@@ -263,6 +261,7 @@ plotter(as.ts(daily_c13iso$C13, deltat=1/365), 365)
 #O18
 plotter(as.ts(monthly_o18iso$O18, deltat=1/12), 12)
 plotter(as.ts(daily_o18iso$O18, deltat=1/365), 365)
+plot(as.ts(monthly_o18iso$O18, deltat=1/12))
 
 #Weekly
 plotter(as.ts(weekly_insitu$CO2, deltat=1/52), 52)
@@ -275,15 +274,13 @@ plotter(as.ts(intermittent_c13iso$C13, deltat=1/8), 8)
 
 
 
-#test
-
 ```
-We see that the data look broadly the same
+
 
 
 ```{r}
-#Creating function that makes all the necessary plots
-plotter = function(timeseries, first_diff){
+#Creating function that makes all the necessary plots of statistics and the function
+plotter = function(timeseries, first_diff, name){
   plot.ts(timeseries, type='s')
   acf2(timeseries)
   
@@ -292,26 +289,43 @@ plotter = function(timeseries, first_diff){
   acf2(diff(timeseries, first_diff))
   
   #Second differencing
-  plot.ts(diff(diff(timeseries)), type='s')
-  acf2(diff(diff(timeseries)))
+  plot.ts(diff(diff(timeseries, first_diff)), type='s')
+  acf2(diff(diff(timeseries, first_diff)))
 }
 ```
 
 
 #Remaining
+
+
+
 Plots with the different timeseries' predictions
 Discussion
 Clean up and prettify things, though probs not really necessary
+Save desired plots and give them proper titles
 
 
 # Discussion
+We see that the data look broadly the same, but that in situ data tend to have better looking acf functions. We prefer monthly data over daily data as there are more outliers in the daily data, making it harder to produce a good model.The C13 data and 018 data seem to be mean adjusted in some way, but their acf functions suggested that a two times differencing was appropriate. All the monthly data show broadly similar acf functions after two times differencing, with the only major difference being between flask and in situ data.
 
-We see from the analysis that none of the time series are stationary. However, ...
-Talk about uncertainty, known unknowns, and unknown unknowns.
+We see that models trained on the different kinds of monthly data yield AICC scores and standard errors that are...
+
+
+'Mention that differencing is better than trend and seasonal element removal can find quote in the book'.
+
+We chose a SARIMA model because...
+
+Drawbacks of this approach are...
+
+We observe that model yields predictions that are reasonable. It becomes less and less certain the further out in time it predicts, which is also reasonable.
+
+Alternative models are...
 
 Weaknesses of chosen model and alternative models.
 
 # Conclusion
+
+We can conclude from our analysis and model that co2 levels will keep increasing into the future at a rate similar to the current rate.
 
 # Appendix
 
