@@ -47,7 +47,6 @@ library(astsa)
 
 # Theory
 
-Outline theory. Start by discussing types of data and behaviour of data. Then talk about modelling and assumptions. Onto MA and AR, then ARMA, then ARIMA processes. Estimation and such
 
 # Data Analysis
 ```{r}
@@ -273,9 +272,11 @@ return(minVal.AICC)
 ```{r}
 mod <- sarima(ts, p=4, d=2, q=1, P=5, Q=1, D=2, S=12)
 mod$ttable
+mod
 
+#Predicting 120 months into the future
 sarima.for(ts, 120, p=4, d=2, q=1, P=5, Q=1, D=2, S=12)
-print("Done")
+
 ```
 
 ```{r}
@@ -301,8 +302,6 @@ ci
 
 #Remaining
 
-
-
 Plots with the different timeseries' predictions
 Discussion
 Clean up and prettify things, though probs not really necessary
@@ -314,13 +313,13 @@ We chose differencing over detrending to remove trend elements in our data as ou
 
 We see that models trained on the different kinds of monthly data yield AICC scores and standard errors that are...
 
-Our data displays a clear seasonal pattern. The earth's ecosystem in general, and weather in particular, are seasonal, and it is reasonable to assume that co2 levels at a measuring station is correlated with changing weather. Therefore, a model that takes this into account is suitable, leading to our choice of Sarima. ... Selecting the parameters for our model is done by testing all combinations of parameter values up to 5 and then picking the one with the smallest ... It would seem intuitive to some to set very high values for our paramters to take into account large numbers of past states, but this would lead to an overly complex model and overfitting. It is therefore prudent to explore parameters including only a few previous states in the model.
+Since our data was non-stationary, an ARIMA model seemed appropriate. Our data displays a clear seasonal pattern. The earth's ecosystem in general, and weather in particular, are seasonal, and it is reasonable to assume that co2 levels at a measuring station is correlated with changing weather. Therefore, a model that takes this into account is suitable, leading to our choice of a SARIMA model. Selecting the parameters for our model is done by testing all combinations of parameter values up to 5 and then picking the one with the smallest AICC score. It would seem intuitive to some to set very high values for our paramters to take into account large numbers of past states, but this would lead to an overly complex model and overfitting. It is therefore prudent to explore parameters including only a few previous states in the model.
 
 Drawbacks of this approach are that... Estiamting the error on future states is of course highly uncertain in and of itself.
 
-The earth's atmosphere is a large enough system that any changes in the trend of CO2 will be gradual, barring some major event. Therefore we would expect accurate predictions a few years into the futre, with decreasing certainty at the 5 years and further out in the future. This seems to be the case in our model.
+Our model seems quite robust when inspecting various statistics. The normal QQ plot has only slight deviations at the tails. The standardized residuals appear staionary, and the p values for the Ljung-Box statistic suggest a good fit. The earth's atmosphere is a large enough system that any changes in the trend of CO2 will be gradual, barring some major event. Therefore we would expect accurate predictions a few years into the futre, with decreasing certainty at the 5 years and further out in the future. This seems to be the case in our model.
 
-Alternative models are...
+Alternative models are... One alternative would have been to detrend and deseason the data and then derive an estimate for the noise. This ...
 
 Our models inidicate that CO2 levels will keep rising into the future, increasing by approximately 30ppm 10 years into the future from where the data ends. The rate of increase is approximately linear with some seasonal variation depending on which month of the year we are considering.
 
