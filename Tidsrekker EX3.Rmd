@@ -128,6 +128,94 @@ pacf(diff(diff(ts, 12),1), main='Monthly CO2 flask reading')
 
 ## The autocorrlation now seems ok, we will not make our model to complex, so we ## decide on using the selected values. 
 ```
+```{r}
+
+#Predictions 
+#Actually can be replaced by the sarima.for(timeseries, time, parameters) function, but produces a slightly different plot
+pred_plot=function(model_fit, original_timeseries, y_label){
+  
+fore = predict(mod$fit, n.ahead=300)
+forecast = append(original_timeseries, fore$pred)
+ts.plot(original_timeseries, xlim=c(0,1000), ylim=c(310, 500), ylab=y_label)
+U = fore$pred+fore$se; L = fore$pred-fore$se 
+xx = c(time(U), rev(time(U))); yy = c(L, rev(U)) 
+polygon(xx, yy, border = 8, col = gray(.6, alpha =.2)) 
+lines(fore$pred, col=2)
+}
+
+pred_plot(mod$fit, ts, 'Monthly CO2')
+```
+
+```{r}
+#Monthly in situ
+
+#Plots
+ts_monthly_insitu = as.ts(na.omit(monthly_insitu$CO2_filled), deltat=1/12)
+plotter(ts_monthly_insitu, 12)
+plotter(ts, 12)
+#Daily flask and insitu
+
+ts_daily_flask = as.ts(na.omit(daily_flask$CO2), deltat=1/365)
+ts_daily_insitu = as.ts(na.omit(daily_insitu$CO2), deltat=1/365)
+plot.ts(ts_daily_flask, type='s')
+plot.ts(ts_daily_insitu, type='s')
+
+#Insitu lacks outliers
+#Differencing and acf
+acf2(ts_daily_flask)
+acf2(ts_daily_insitu)
+
+#First difference
+acf2(diff(ts_daily_flask, 365))
+acf2(diff(ts_daily_insitu, 365))
+
+
+'?'(acf)
+#Second difference
+acf2(diff(diff(ts_daily_flask, 365)))
+acf2(diff(diff(ts_daily_insitu, 365)))
+
+
+#C13
+plotter(as.ts(monthly_c13iso$C13_filled, deltat=1/12), 12)
+plotter(as.ts(daily_c13iso$C13, deltat=1/365), 365)
+
+#O18
+plotter(as.ts(monthly_o18iso$O18, deltat=1/12), 12)
+plotter(as.ts(daily_o18iso$O18, deltat=1/365), 365)
+plot(as.ts(monthly_o18iso$O18, deltat=1/12))
+
+#Weekly
+plotter(as.ts(weekly_insitu$CO2, deltat=1/52), 52)
+
+#Ten minutes
+plotter(as.ts(ten_min_insitu$CO2, deltat=1/525600), 525600)
+
+#Intermittent
+plotter(as.ts(intermittent_c13iso$C13, deltat=1/8), 8)
+
+
+
+```
+We see that the data look broadly the same, but that in situ data tend to have better looking acf functions. Variance seems stable in all our data, so we do not need to transform it. We prefer monthly data over daily data as there are more outliers in the daily data, making it harder to produce a good model.The C13 data and 018 data seem to be mean adjusted in some way, but their acf functions suggested that a two times differencing was appropriate. All the monthly data show broadly similar acf functions after two times differencing, with the only major difference being between flask and in situ data. 
+
+
+```{r}
+#Creating function that makes all the necessary plots of statistics and the function
+plotter = function(timeseries, first_diff, name){
+  plot.ts(timeseries, type='s')
+  acf2(timeseries)
+  
+  #First differencing
+  plot.ts(diff(timeseries, first_diff), type='s')
+  acf2(diff(timeseries, first_diff))
+  
+  #Second differencing
+  plot.ts(diff(diff(timeseries, first_diff)), type='s')
+  acf2(diff(diff(timeseries, first_diff)))
+}
+```
+
 
 Now plotting the transformed data we get:
 ```{r}
@@ -185,6 +273,9 @@ return(minVal.AICC)
 ```{r}
 mod <- sarima(ts, p=4, d=2, q=1, P=5, Q=1, D=2, S=12)
 mod$ttable
+
+sarima.for(ts, 120, p=4, d=2, q=1, P=5, Q=1, D=2, S=12)
+print("Done")
 ```
 
 ```{r}
@@ -201,98 +292,11 @@ ci = as.data.frame(ci)
 names(ci) = c("Estimate", "Lower bound", "Upper bound")
 ci
 
-```
-
-
-```{r}
-
-#Predictions
-pred_plot=function(model_fit, original_timeseries, y_label){
-  
-fore = predict(mod$fit, n.ahead=300)
-forecast = append(original_timeseries, fore$pred)
-ts.plot(original_timeseries, xlim=c(0,1000), ylim=c(310, 500), ylab=y_label)
-U = fore$pred+fore$se; L = fore$pred-fore$se 
-xx = c(time(U), rev(time(U))); yy = c(L, rev(U)) 
-polygon(xx, yy, border = 8, col = gray(.6, alpha =.2)) 
-lines(fore$pred, col=2)
-}
-
-pred_plot(mod$fit, ts, 'Monthly CO2')
-```
-
-We see that the SARIMA generates a reasonable prediction.
-
-Now let us explore the remaining data.
-```{r}
-#Monthly in situ
-
-#Plots
-ts_monthly_insitu = as.ts(na.omit(monthly_insitu$CO2_filled), deltat=1/12)
-plotter(ts_monthly_insitu, 12)
-plotter(ts, 12)
-#Daily flask and insitu
-
-ts_daily_flask = as.ts(na.omit(daily_flask$CO2), deltat=1/365)
-ts_daily_insitu = as.ts(na.omit(daily_insitu$CO2), deltat=1/365)
-plot.ts(ts_daily_flask, type='s')
-plot.ts(ts_daily_insitu, type='s')
-
-#Insitu lacks outliers
-#Differencing and acf
-acf2(ts_daily_flask)
-acf2(ts_daily_insitu)
-
-#First difference
-acf2(diff(ts_daily_flask, 365))
-acf2(diff(ts_daily_insitu, 365))
-
-
-'?'(acf)
-#Second difference
-acf2(diff(diff(ts_daily_flask, 365)))
-acf2(diff(diff(ts_daily_insitu, 365)))
-
-
-#C13
-plotter(as.ts(monthly_c13iso$C13_filled, deltat=1/12), 12)
-plotter(as.ts(daily_c13iso$C13, deltat=1/365), 365)
-
-#O18
-plotter(as.ts(monthly_o18iso$O18, deltat=1/12), 12)
-plotter(as.ts(daily_o18iso$O18, deltat=1/365), 365)
-plot(as.ts(monthly_o18iso$O18, deltat=1/12))
-
-#Weekly
-plotter(as.ts(weekly_insitu$CO2, deltat=1/52), 52)
-
-#Ten minutes
-plotter(as.ts(ten_min_insitu$CO2, deltat=1/525600), 525600)
-
-#Intermittent
-plotter(as.ts(intermittent_c13iso$C13, deltat=1/8), 8)
-
+#Alternative estimation
 
 
 ```
 
-
-
-```{r}
-#Creating function that makes all the necessary plots of statistics and the function
-plotter = function(timeseries, first_diff, name){
-  plot.ts(timeseries, type='s')
-  acf2(timeseries)
-  
-  #First differencing
-  plot.ts(diff(timeseries, first_diff), type='s')
-  acf2(diff(timeseries, first_diff))
-  
-  #Second differencing
-  plot.ts(diff(diff(timeseries, first_diff)), type='s')
-  acf2(diff(diff(timeseries, first_diff)))
-}
-```
 
 
 #Remaining
@@ -306,22 +310,19 @@ Save desired plots and give them proper titles
 
 
 # Discussion
-We see that the data look broadly the same, but that in situ data tend to have better looking acf functions. We prefer monthly data over daily data as there are more outliers in the daily data, making it harder to produce a good model.The C13 data and 018 data seem to be mean adjusted in some way, but their acf functions suggested that a two times differencing was appropriate. All the monthly data show broadly similar acf functions after two times differencing, with the only major difference being between flask and in situ data.
+We chose differencing over detrending to remove trend elements in our data as our goal is to coerce the data to stationarity for the purposes of fitting a model (2017 Time Series analysis and Its applications P.56)
 
 We see that models trained on the different kinds of monthly data yield AICC scores and standard errors that are...
 
+Our data displays a clear seasonal pattern. The earth's ecosystem in general, and weather in particular, are seasonal, and it is reasonable to assume that co2 levels at a measuring station is correlated with changing weather. Therefore, a model that takes this into account is suitable, leading to our choice of Sarima. ... Selecting the parameters for our model is done by testing all combinations of parameter values up to 5 and then picking the one with the smallest ... It would seem intuitive to some to set very high values for our paramters to take into account large numbers of past states, but this would lead to an overly complex model and overfitting. It is therefore prudent to explore parameters including only a few previous states in the model.
 
-'Mention that differencing is better than trend and seasonal element removal can find quote in the book'.
+Drawbacks of this approach are that... Estiamting the error on future states is of course highly uncertain in and of itself.
 
-We chose a SARIMA model because...
-
-Drawbacks of this approach are...
-
-We observe that model yields predictions that are reasonable. It becomes less and less certain the further out in time it predicts, which is also reasonable.
+The earth's atmosphere is a large enough system that any changes in the trend of CO2 will be gradual, barring some major event. Therefore we would expect accurate predictions a few years into the futre, with decreasing certainty at the 5 years and further out in the future. This seems to be the case in our model.
 
 Alternative models are...
 
-Weaknesses of chosen model and alternative models.
+Our models inidicate that CO2 levels will keep rising into the future, increasing by approximately 30ppm 10 years into the future from where the data ends. The rate of increase is approximately linear with some seasonal variation depending on which month of the year we are considering.
 
 # Conclusion
 
