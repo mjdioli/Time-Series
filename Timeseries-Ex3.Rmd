@@ -485,7 +485,7 @@ Our model seems quite robust when inspecting various statistics. The normal QQ p
 Our models inidicate that CO2 levels will keep rising into the future, increasing by approximately 30ppm 10 years into the future from where the data ends. The rate of increase is approximately linear with some seasonal variation depending on which month of the year we are considering.
 
 
-The model seem to predict an increase of the CO2 levels in the next few years, and the data seems to fit the model assumptions. If we follow the same development as today, and if we assume the model assumption to be true, we will at upper 97.5% in confidence interval reach 450ppm CO2 in 2035, and will at lower 0.025% reach 450ppm in 2038.
+The model seem to predict an increase of the CO2 levels in the next few years, and the data seems to fit the model assumptions. If we follow the same development as today, and if we assume the model assumption to be true, we will at upper 97.5% in confidence interval reach 450ppm CO2 in 2035, and will at lower 2.5% reach 450ppm in 2038.
 
 We can conclude from our analysis and model that co2 levels will keep increasing into the future at a rate similar to the current rate.
 
