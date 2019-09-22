@@ -89,22 +89,6 @@ null
 \begin{document}
 \maketitle
 
-\hypertarget{minimum}{%
-\section{Minimum}\label{minimum}}
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  Exploring the data with plotting of relevant statistics
-\item
-  Transforming the data
-\item
-  Model parameter estimation including uncertainty
-\item
-  Diagnostics, and model choice discussion
-\end{enumerate}
-
 \hypertarget{abstract}{%
 \section{Abstract}\label{abstract}}
 
@@ -114,16 +98,10 @@ null
 \hypertarget{theory}{%
 \section{Theory}\label{theory}}
 
-Outline theory. Start by discussing types of data and behaviour of data.
-Then talk about modelling and assumptions. Onto MA and AR, then ARMA,
-then ARIMA processes. Estimation and such
-
 \hypertarget{data-analysis}{%
 \section{Data Analysis}\label{data-analysis}}
 
 We start by creating simple time series plot to get an overview.
-
-\#Creating basic plots
 
 \#Averaging the montly reads so that we have one read per month
 
@@ -145,15 +123,27 @@ So we decide on using \(\nabla\nabla^{12}\) as our tranformation.
 Which results in a SARIMA model.
 
 (Coefficient can i.e.~be fit using innovations algoritihm. But that
-might not be the method impletemented in the package). To find the best
-choice of parameters we compare AIC and AICC of different models.
+might not be the method impletemented in the package).
+
+To find the best choice of parameters we compare AIC and AICC of
+different models.
 
 \(p=4, d=1, P=5, Q=1\) seems to be best choice of the remaining
 parameters, where we get AIC and AICcc values of 1.27
 
-Fitting the model that had the most optimal values:
+With this chose of parameters our model would be:
+\[\phi(B)\Phi(B)X_t = \theta(B)\Theta(B)Z_ t\] \[\theta(z)=1+\theta_1z\]
+\[\Theta(z)=1+\Theta_1z\] \[\phi(z)=1-\phi_1z+\dots+\phi_ 4z^4\]
+\[\Phi(z)=1-\Phi_1z+\dots+\Phi_5z^5\]
 
-The model seem to fit the data quite well.
+Fitting the model with the selected parameters, we get the following
+diagnostic:
+
+And the following coefficients \(\phi_1=\)-0.0585188,
+\(\phi_2=\)-0.0697696, \(\phi_3=\)-0.0247383,\(\phi_4=\)-0.1190496,
+\(\theta_1=\)-0.5134533, \(\Phi_1=\)-0.0165048, \(\phi_2=\)-0.0992696,
+\$\Phi\_3=\(0.014147,\)\Phi\_4=\(-0.1144051,\)\Phi\_5=\$-0.0758144,
+\(\Theta_1=\)-0.8296747
 
 The standardized residuals seems to be random, and there are not clear
 trend. The residuals seems homoscedastic and are centered at zero, which
@@ -167,30 +157,50 @@ some family wise error rate.
 Points in the qq-plot also seems to align with the normal line quite
 well, which indicate a good fit for our model.
 
-\hypertarget{forecasting}{%
-\subsection{Forecasting}\label{forecasting}}
+We can also plot the model fit, versus the real values, getting the
+following:
 
-We have now fit our model.
+the model seems to fit the data nicely.
 
-The error band in estimation are estimated prediction errors.
+All in all, the model seem to fit the data quite well.
 
-Property 3.10 Large Sample Distribution of the Estimators p.~125
+\hypertarget{confidence-interval-for-coefficients}{%
+\subsection{Confidence interval for
+coefficients}\label{confidence-interval-for-coefficients}}
+
+We use bootstrapping to create confidence intervals for the
+coeffiecient. In using bootstraping we create a simulated data-set by
+drawing at random from our original data set, and fit a model using
+this. We repeat this, and in the end get a set of possible coefficient
+values, which we can use to confidence intervals.
+
+For the coefficients we get the following bootstrapped confidence
+intervals (95\%):
+
+\hypertarget{forecasting-and-bootstrapping}{%
+\subsection{Forecasting and
+bootstrapping}\label{forecasting-and-bootstrapping}}
+
+Bootstrapping can also be used to obtain prediction interval. The ones
+gained with traditional methods is often too narrow. (REFERENCE) We will
+use a a blocked bootstrap, we select adjunct sections the time series at
+random and join the selections together.
+
+The method used in this section is adapted from (REFERENCE) chapter on
+bootstrapping and bagging.
+
+An example of how bootstrapped data would look like:
+
+We the fit different models, on 100 bootstrap samples:
 
 \hypertarget{discussion}{%
 \section{Discussion}\label{discussion}}
 
-Scoring model using information criteria due to the scarcity of data
-(maybe).
-
-Talk about uncertainty, known unknowns, and unknown unknowns.
-
-Weaknesses of chosen model and alternative models.
+The model seem to predict an increase of the co2 levels in the next
+year. And seem to be quite confident on its predictions.
 
 \hypertarget{conclusion}{%
 \section{Conclusion}\label{conclusion}}
-
-\hypertarget{appendix}{%
-\section{Appendix}\label{appendix}}
 
 \hypertarget{references}{%
 \section{References}\label{references}}

@@ -126,6 +126,7 @@ Which results in a SARIMA model.
 sarima(ts, p=1, d=1, q=1, P=1, Q=1, D=1, S=12)
 ```
 (Coefficient can i.e. be fit using innovations algoritihm. But that might not be the method impletemented in the package).
+
 To find the best choice of parameters we compare AIC and AICC of different models. 
 
 ```{r eval=FALSE, include=FALSE}
@@ -162,12 +163,21 @@ for(p1 in 1:5){
 ```
 $p=4, d=1, P=5, Q=1$ seems to be best choice of the remaining parameters, where we get AIC and AICcc values of 1.27 
 
-Fitting the model that had the most optimal values:
-```{r}
+With this chose of parameters our model would be:
+$$\phi(B)\Phi(B)X_t = \theta(B)\Theta(B)Z_ t$$
+$$\theta(z)=1+\theta_1z$$
+$$\Theta(z)=1+\Theta_1z$$
+$$\phi(z)=1-\phi_1z+\dots+\phi_ 4z^4$$
+$$\Phi(z)=1-\Phi_1z+\dots+\Phi_5z^5$$
+
+
+Fitting the model with the selected parameters, we get the following diagnostic:
+```{r echo=FALSE}
 mod <- sarima(ts, p=4, d=1, q=1, P=5, Q=1, D=1, S=12)
-mod
+
 ```
-The model seem to fit the data quite well. 
+And the following coefficients
+$\phi_1=$`r mod$fit$coef[1]`, $\phi_2=$`r mod$fit$coef[2]`, $\phi_3=$`r mod$fit$coef[3]`,$\phi_4=$`r mod$fit$coef[4]`, $\theta_1=$`r mod$fit$coef[5]`, $\Phi_1=$`r mod$fit$coef[6]`, $\phi_2=$`r mod$fit$coef[7]`, $\Phi_3=$`r mod$fit$coef[8]`,$\Phi_4=$`r mod$fit$coef[9]`,$\Phi_5=$`r mod$fit$coef[10]`, $\Theta_1=$`r mod$fit$coef[11]`
 
 The standardized residuals seems to be random, and there are not clear trend. The residuals seems homoscedastic and are centered at zero, which is a good indcation that our models assumptions are held by the data.
 
@@ -176,8 +186,58 @@ Looking at the autocorrolation plot, there does not seem to be any lag corrolati
 Points in the qq-plot also seems to align with the normal line quite well, which indicate a good fit for our model. 
 
 
-## Forecasting using
-Bootstrapping can be used to obtain more accurate prediction intervals. The ones gained with traditional methods is often too narrow. In general bootstraping we creare a simulated data-set by drawing at random from our original data set. We repeat this, and fit on our new data, and create prediction interval based on the different observations produced by the different models. We will use a a blocked bootstrap, we select adjunct sections the time series at random and join the part together. 
+We can also plot the model fit, versus the real values, getting the following:
+```{r}
+
+```
+the model seems to fit the data nicely. 
+
+All in all, the model seem to fit the data quite well. 
+
+## Confidence interval for coefficients
+We use bootstrapping to create confidence intervals for the coeffiecient. In using bootstraping we create a simulated data-set by drawing at random from our original data set, and fit a model using this. We repeat this, and in the end get a set of possible coefficient values, which we can use to confidence intervals.
+
+```{r eval=FALSE, include=FALSE}
+n.bootstrap <- 10
+simulated <- bld.mbb.bootstrap(monthly_flask2$CO2_filled[-1], n.bootstrap)
+coefs <- matrix(0, nrow = n.bootstrap, ncol = length(mod$fit$coef))
+i <- 1
+while(i <= n.bootstrap){
+  print(i)
+  ts.temp = ts(simulated[[i]],start = c(1960, 2), frequency = 12)
+  mod.temp <- tryCatch(sarima(ts.temp, p=4, d=1, q=1, P=5, Q=1, D=1, S=12, tol = 1e-3), error = function(e) NA) # At time optim not too friendly, so select new boot-strap sample. 
+  if(is.na(mod.temp)){
+    print("ERROR")
+    simulated[[i]] = bld.mbb.bootstrap(monthly_flask2$CO2_filled[-1], 2)[[1]]
+    next
+  }
+  print("NO ERROR")
+  coefs[i,] <- mod.temp$fit$coef
+  i = i + 1
+}
+write.table(coefs,file="bootstrap_coef.txt") # keeps the rownames
+```
+
+For the coefficients we get the following bootstrapped confidence intervals (95%):
+```{r include=FALSE}
+coefs2 <- read.table("bootstrap_coef.txt",header=TRUE,row.names=1)
+coefs.summary <- apply(coefs2, 2,function(x) quantile(x, c(0.025, 0.975)))
+colnames(coefs.summary) <- c("phi1","phi2","phi3","phi4","theta1","Phi1","Phi2","Phi3","Phi4","Phi5","Theta1")
+rownames(coefs.summary) <- c("lower 2.5%", "upper 2.5%")
+```
+```{r echo=FALSE}
+coefs.summary
+```
+
+
+
+
+## Forecasting and bootstrapping
+Bootstrapping can also be used to obtain prediction interval. The ones gained with traditional methods is often too narrow. (REFERENCE) We will use a a blocked bootstrap, we select adjunct sections the time series at random and join the selections together.
+
+The method used in this section is adapted from (REFERENCE) chapter on bootstrapping and bagging. 
+
+An example of how bootstrapped data would look like:
 ```{r}
 library(forecast)
 library(dplyr)
@@ -190,20 +250,19 @@ autoplot(ts.bootstrap, colour=TRUE) +
   ylab("Bootstrapped series") 
 ```
 
-
-We the fit different models, on 50 bootstrap samples:
+We the fit different models, on 100 bootstrap samples:
 ```{r}
-n.bootstrap <- 50
+n.bootstrap <- 10
 simulated <- bld.mbb.bootstrap(monthly_flask2$CO2_filled[-1], n.bootstrap)
 
 h <- 36L
 future <- matrix(0, nrow=n.bootstrap, ncol=h)
-coefs <- matrix(0, nrow = n.bootstrap, ncol = length(mod$fit$coef))
-for(i in 1:n.bootstrap){
+i <- 1
+while(i <= n.bootstrap){
   ts.temp = ts(simulated[[i]],start = c(1960, 2), frequency = 12)
-  #mod.temp <- sarima(ts.temp, p=4, d=1, q=1, P=5, Q=1, D=1, S=12,details = T,tol = 1e-3)
-  #coefs[i,] <- mod.temp$fit$coef
   future[i,] <- sarima.for(ts.temp, p=4, d=1, q=1, P=1, Q=1, D=1, S=12, n.ahead = h, plot.all = F)$pred
+  
+  i = i + 1
 }
 
 d <- data.frame(monthly_flask2$Yr, monthly_flask2$Mn, monthly_flask2$CO2_filled)
@@ -223,21 +282,10 @@ ts.plot(ts, fc.quant$lower, fc.quant$upper, fc.quant$mean, gpars=list(xlab="Year
 ts.plot(ts, fc.quant$lower, fc.quant$upper, fc.quant$mean, gpars=list(xlab="Year", ylab="CO2"), col=c("black", "blue", "blue"),xlim=c(2018,2022),ylim=c(405,420))
 ```
 
-
-Property 3.10 Large Sample Distribution of the Estimators
-p. 125
-
-
 # Discussion
-Scoring model using information criteria due to the scarcity of data (maybe). 
-
-Talk about uncertainty, known unknowns, and unknown unknowns.
-
-Weaknesses of chosen model and alternative models.
+The model seem to predict an increase of the co2 levels in the next year. And seem to be quite confident on its predictions.
 
 # Conclusion
-
-# Appendix
 
 # References
 
