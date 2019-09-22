@@ -79,12 +79,6 @@ na.omit(monthly_flask1)
 ```
 We start by creating simple time series plot to get an overview. 
 
-#Creating basic plots
-```{r}
-#plot(data.frame(monthly_flask2$Date2, monthly_flask2$CO2_filled), type="o", ylab="CO2 Levels")
-#plot.ts(monthly_flask2$CO2_filled, type='s')
-```
-
 #Averaging the montly reads so that we have one read per month
 ```{r}
 ts = ts(monthly_flask2$CO2_filled[-1],start = c(1960, 2), frequency = 12)
@@ -182,56 +176,51 @@ Looking at the autocorrolation plot, there does not seem to be any lag corrolati
 Points in the qq-plot also seems to align with the normal line quite well, which indicate a good fit for our model. 
 
 
-## Forecasting
-We have now fit our model.
-```{r}
-# Forecasting two years into the future
-forecast <- sarima.for(ts, p=4, d=1, q=1, P=1, Q=1, D=1, S=12, n.ahead = 120)
-```
-The error band in estimation are estimated prediction errors. 
-
-## Bootstrapping to obtain prediction intervals
+## Forecasting using
 Bootstrapping can be used to obtain more accurate prediction intervals. The ones gained with traditional methods is often too narrow. In general bootstraping we creare a simulated data-set by drawing at random from our original data set. We repeat this, and fit on our new data, and create prediction interval based on the different observations produced by the different models. We will use a a blocked bootstrap, we select adjunct sections the time series at random and join the part together. 
 ```{r}
 library(forecast)
 library(dplyr)
 library(ggplot2)
-bootseries <- bld.mbb.bootstrap(monthly_flask2$CO2_filled[-1], 100) %>%
+ts.bootstrap <- bld.mbb.bootstrap(monthly_flask2$CO2_filled[-1], 100) %>%
   as.data.frame() %>% ts(start=c(1960,2), frequency=12)
 
-autoplot(bootseries, colour=TRUE) +
-  autolayer(ts, colour=FALSE) +
-  ylab("Bootstrapped series") + guides(colour="none")
+autoplot(ts.bootstrap, colour=TRUE) +
+  autolayer(ts, colour=FALSE) + guides(colour="none")
+  ylab("Bootstrapped series") 
 ```
 
 
 We the fit different models, on 50 bootstrap samples:
 ```{r}
-nsim <- 10
-sim <- bld.mbb.bootstrap(monthly_flask2$CO2_filled[-1], nsim)
+n.bootstrap <- 50
+simulated <- bld.mbb.bootstrap(monthly_flask2$CO2_filled[-1], n.bootstrap)
 
 h <- 36L
-future <- matrix(0, nrow=nsim, ncol=h)
-coefs <- matrix(0, nrow = nsim, ncol = length(mod$fit$coef))
-for(i in seq(nsim)){
-  ts.temp = ts(sim[[i]],start = c(1960, 2), frequency = 12)
+future <- matrix(0, nrow=n.bootstrap, ncol=h)
+coefs <- matrix(0, nrow = n.bootstrap, ncol = length(mod$fit$coef))
+for(i in 1:n.bootstrap){
+  ts.temp = ts(simulated[[i]],start = c(1960, 2), frequency = 12)
   #mod.temp <- sarima(ts.temp, p=4, d=1, q=1, P=5, Q=1, D=1, S=12,details = T,tol = 1e-3)
   #coefs[i,] <- mod.temp$fit$coef
   future[i,] <- sarima.for(ts.temp, p=4, d=1, q=1, P=1, Q=1, D=1, S=12, n.ahead = h, plot.all = F)$pred
 }
 
+d <- data.frame(monthly_flask2$Yr, monthly_flask2$Mn, monthly_flask2$CO2_filled)
+names(d) <- c("Year", "Month", "CO2")
+
 fc.quant <- structure(list(
-    mean = ts(colMeans(future), start=c(2019, 12), frequency=12),
+    mean = ts(colMeans(future), start=c(2019, 11), frequency=12),
     lower = ts(apply(future, 2, quantile, prob=0.025),
-               start=c(2019, 12), frequency=12),
+               start=c(2019, 11), frequency=12),
     upper = ts(apply(future, 2, quantile, prob=0.975),
-               start=c(2019, 12), frequency=12),
+               start=c(2019, 11), frequency=12),
     level=95),
   class="forecast")
-library(ggfortify)
-autoplot(fc.quant)
-autoplot(ts) +
-  autolayer(fc.quant, series="Simulated")
+
+ts.plot(ts, fc.quant$lower, fc.quant$upper, fc.quant$mean, gpars=list(xlab="Year", ylab="CO2"), col=c("black", "blue", "blue"),xlim=c(1990,2022))
+
+ts.plot(ts, fc.quant$lower, fc.quant$upper, fc.quant$mean, gpars=list(xlab="Year", ylab="CO2"), col=c("black", "blue", "blue"),xlim=c(2018,2022),ylim=c(405,420))
 ```
 
 
