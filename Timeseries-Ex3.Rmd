@@ -47,10 +47,10 @@ library(DescTools)
 ```
 
 # Abstract
- This article presents the basics of time series analysis, and applies it to model monthly average atmospheric CO2 levels observed at Mauna Loa Observatory, Hawaii, U.S. 
+ This article presents the basics of time series analysis, and applies it to model monthly average atmospheric CO2 levels observed at the Mauna Loa Observatory, Hawaii, U.S. 
 
 # Introduction
-Carbon dioxide levels have been monitored since 1958 at the Mauna Loa Observatory, located in the Pacific Ocean on top of Hawaii’s biggest volcano. CO2 is a green-house gas, and as humans burn fossile fuels, more is added to the atmosphere. As a consequence we have since the industrial revolution seen an increase in global average temperature. In the Paris agreement one targeted to stay below a 2C increase, commonly that has been seen to be equivalent to about 450ppm in atmospheric CO2. In this article we will use theory on time series to model CO2 levels measured at the observatory, with the goal of forecasting future levels, and to predict when, if development continues as today, when will reach the 450ppm roof. For analysis, we will focus on flask measurements taken on a monthly basis as we are interested in predicting the long-term trend. 
+Carbon dioxide levels have been monitored since 1958 at the Mauna Loa Observatory, located in the Pacific Ocean on top of Hawaii’s biggest volcano. CO2 is a green-house gas, and as humans burn fossile fuels, more is added to the atmosphere. As a consequence we have since the industrial revolution seen an increase in global average temperature. In the Paris agreement one targeted to stay below a 2C increase, commonly that has been seen to be equivalent to about 450ppm in atmospheric CO2. In this article we will use theory on time series to model CO2 levels measured at the observatory, with the goal of forecasting future levels, and to predict when, if development continues as today, we will reach the 450ppm roof. For analysis, we will focus on flask measurements taken on a monthly basis as we are interested in predicting the long-term trend. 
 
 # Theory
 We note that large parts of the theory presented here, is based on Brockwell and Davis. 
@@ -81,7 +81,7 @@ $$X_t = m_t + s_t + Y_t, \quad t=1,\dots,n$$
 Where $EY_t = 0$, $s_{t+d}=s_t$ and $\sum_{j=1}^d s_j= 0$.$m$ is referred to as the  trend of the time-series, and $s_t$ is the seasonal trend. The noise $Y_t$ is often assumed to be identically independently distributed (iid) white noise:
 
 $$Y_t \sim WN (0,\sigma^2)$$
-This assumption and this estimator can be used when creating autocorrolation (ACF) and partial autocorrolation plots (PACF),
+This assumption and this estimator can be used when creating autocorrolation (ACF) and partial autocorrolation plots (PACF).
 
 Subtracting the trend estimation, will yield as timeseries without a trend. 
 A trend can also be eliminated from a series by differencing:
