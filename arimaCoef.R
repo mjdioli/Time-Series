@@ -27,12 +27,10 @@ monthly_flask1[9:10] = list(NULL)
 
 monthly_flask2 = monthly_flask
 monthly_flask2[5:8] = list(NULL) 
-monthly_flask2
-na.omit(monthly_flask1)
 
 n.bootstrap <- 200
 simulated <- bld.mbb.bootstrap(monthly_flask2$CO2_filled[-1], n.bootstrap)
-coefs <- matrix(0, nrow = n.bootstrap, ncol = length(mod$fit$coef))
+coefs <- matrix(0, nrow = n.bootstrap, ncol = 11)
 i <- 1
 while(i <= n.bootstrap){
   print(i)
