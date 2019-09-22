@@ -24,7 +24,7 @@ knitr::opts_chunk$set(
 	echo = F,
 	fig.pos="H",
 	fig.align='center',
-	fig.height = 4.75,
+	fig.height = 4.5,
 	fig.width = 10
 )
 knitr::opts_chunk$set(error=TRUE)
@@ -269,11 +269,7 @@ plot(decompose(ts))
 ```
 With this we see a much clearer sesonal trend.
 
-We plot the autoccorlation plot for the time series 
-```{r include=T}
-PlotGACF(ts, length(monthly_flask2$CO2_filled), main='Raw-data')
-```
-Definitely not stationary, apply differencing ($\nabla$) to see if it gets any better. 
+The data is definitely not stationary, thus we apply differencing ($\nabla$) to see if it gets any better. 
 ```{r include=T}
 PlotACF(diff(ts), lag.max = 36,main='Tranformation first difference')
 ```
@@ -469,7 +465,6 @@ fc.quant <- structure(list(
 ts.plot(ts, fc.quant$lower, fc.quant$upper, fc.quant$mean, gpars=list(xlab="Year", ylab="CO2"), col=c("black", "blue", "blue"),xlim=c(1990,2050), main="Modelled flask CO2 levels")
 
 ts.plot(ts, fc.quant$lower, fc.quant$upper, fc.quant$mean, gpars=list(xlab="Year", ylab="CO2"), col=c("black", "blue", "blue"),xlim=c(2030,2045),ylim=c(440,460), main="Modelled flask CO2 levels")
-
 ```
 
 ```{r eval = F, include = F}
@@ -481,7 +476,18 @@ fc.quant$upper
 
 
 # Discussion and Conclusion
+We chose differencing over detrending to remove trend elements in our data as our goal is to coerce the data to stationarity for the purposes of fitting a model (2017 Time Series analysis and Its applications P.56)
+
+Since our data was non-stationary, an ARIMA model seemed appropriate. Our data displays a clear seasonal pattern. The earth's ecosystem in general, and weather in particular, are seasonal, and it is reasonable to assume that co2 levels at a measuring station is correlated with changing weather. Therefore, a model that takes this into account is suitable, leading to our choice of a SARIMA model. Selecting the parameters for our model is done by testing all combinations of parameter values up to 5 and then picking the one with the smallest AICC score. It would seem intuitive to some to set very high values for our paramters to take into account large numbers of past states, but this would lead to an overly complex model and overfitting. It is therefore prudent to explore parameters including only a few previous states in the model.
+
+Our model seems quite robust when inspecting various statistics. The normal QQ plot has only slight deviations at the tails. The standardized residuals appear staionary, and the p values for the Ljung-Box statistic suggest a good fit. The earth's atmosphere is a large enough system that any changes in the trend of CO2 will be gradual, barring some major event. Therefore we would expect accurate predictions a few years into the futre, with decreasing certainty at the 5 years and further out in the future. This seems to be the case in our model.
+
+Our models inidicate that CO2 levels will keep rising into the future, increasing by approximately 30ppm 10 years into the future from where the data ends. The rate of increase is approximately linear with some seasonal variation depending on which month of the year we are considering.
+
+
 The model seem to predict an increase of the CO2 levels in the next few years, and the data seems to fit the model assumptions. If we follow the same development as today, and if we assume the model assumption to be true, we will at upper 97.5% in confidence interval reach 450ppm CO2 in 2035, and will at lower 0.025% reach 450ppm in 2038.
+
+We can conclude from our analysis and model that co2 levels will keep increasing into the future at a rate similar to the current rate.
 
 # References
 C. D. Keeling, S. C. Piper, R. B. Bacastow, M. Wahlen, T. P. Whorf, M. Heimann, and H. A. Meijer, *Exchanges of atmospheric CO2 and 13CO2 with the terrestrial biosphere and oceans from 1978 to 2000.* I. Global aspects, SIO Reference Series , No. 01-06, Scripps Institution of Oceanography, San Diego, 88 pages, 2001.
