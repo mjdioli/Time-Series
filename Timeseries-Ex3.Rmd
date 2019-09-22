@@ -3,16 +3,16 @@ title: "TMA4285 Timeseries, Exercise 3"
 author: "Marius Dioli, Amir Ahmed and Andreas Ferstad"
 date: "September 2019"
 output:
+  html_document: default
+  word_document: default
   pdf_document:
       fig_caption: yes
-  word_document: default
-  html_document: default
-
+bibliography: bibliography.bib
+nocite: '@*'
   
 header-includes:
  \usepackage{float}
  \usepackage[utf8]{inputenc}
-
 ---
 
 ```{r setup, include=FALSE}
@@ -24,7 +24,7 @@ knitr::opts_chunk$set(
 	echo = F,
 	fig.pos="H",
 	fig.align='center',
-	fig.height = 5,
+	fig.height = 4.75,
 	fig.width = 10
 )
 knitr::opts_chunk$set(error=TRUE)
@@ -48,10 +48,9 @@ library(DescTools)
 
 # Abstract
  This article presents the basics of time series analysis, and applies it to model monthly average atmospheric CO2 levels observed at Mauna Loa Observatory, Hawaii, U.S. 
- As carbon dioxide is a green house 
 
 # Introduction
-Carbon dioxide levels have been monitored since 1958 at the Mauna Loa Observatory, located in the Pacific Ocean on top of Hawaii’s biggest volcano. Co2 is a green-house gas, and as humans burn fossile fuels, more is added to the atmosphere. As a consequence we have since the industrial revolution seen an increase in global average temperature. n the Paris agreement one targeted to stay below a 2C increase, that is about equivalent to 450ppm in atmospheric CO2. In this article we will use theory on time series to model Co2 levels measured at the observatory, with the goal of forecasting future levels, and to predict when, if development continues as today, we will reach the 450ppm roof. For analysis, we will focus on flask measurements taken on a monthly basis as we are interested in predicting the long-term trend. 
+Carbon dioxide levels have been monitored since 1958 at the Mauna Loa Observatory, located in the Pacific Ocean on top of Hawaii’s biggest volcano. CO2 is a green-house gas, and as humans burn fossile fuels, more is added to the atmosphere. As a consequence we have since the industrial revolution seen an increase in global average temperature. In the Paris agreement one targeted to stay below a 2C increase, commonly that has been seen to be equivalent to about 450ppm in atmospheric CO2. In this article we will use theory on time series to model CO2 levels measured at the observatory, with the goal of forecasting future levels, and to predict when, if development continues as today, when will reach the 450ppm roof. For analysis, we will focus on flask measurements taken on a monthly basis as we are interested in predicting the long-term trend. 
 
 # Theory
 We note that large parts of the theory presented here, is based on Brockwell and Davis. 
@@ -231,12 +230,12 @@ monthly_c13iso = read.csv(paste(path, "monthly_flask_c13_mlo.csv", sep=""))
 daily_o18iso = read.csv(paste(path, "daily_flask_o18_mlo.csv", sep=""))
 intermittent_c13iso = read.csv(paste(path, "intermittent_flask_c14_mlo.csv", sep=""))
 monthly_o18iso = read.csv(paste(path, "monthly_flask_o18_mlo.csv", sep=""))
-daily_flask = read.csv(paste(path, "daily_flask_co2_mlo.csv", sep=""))
-monthly_flask = read.csv(paste(path, "monthly_flask_co2_mlo.csv", sep=""), na.strings=-99.99)
-ten_min_insitu = read.csv(paste(path, "ten_minute_in_situ_co2_mlo.txt", sep=""))
-daily_insitu = read.csv(paste(path, "daily_in_situ_co2_mlo.csv", sep=""), comment.char = '%')
-weekly_insitu = read.csv(paste(path, "weekly_in_situ_co2_mlo.csv", sep=""))
-monthly_insitu = read.csv(paste(path, "monthly_in_situ_co2_mlo.csv", sep=""))
+daily_flask = read.csv(paste(path, "daily_flask_CO2_mlo.csv", sep=""))
+monthly_flask = read.csv(paste(path, "monthly_flask_CO2_mlo.csv", sep=""), na.strings=-99.99)
+ten_min_insitu = read.csv(paste(path, "ten_minute_in_situ_CO2_mlo.txt", sep=""))
+daily_insitu = read.csv(paste(path, "daily_in_situ_CO2_mlo.csv", sep=""), comment.char = '%')
+weekly_insitu = read.csv(paste(path, "weekly_in_situ_CO2_mlo.csv", sep=""))
+monthly_insitu = read.csv(paste(path, "monthly_in_situ_CO2_mlo.csv", sep=""))
 
 ten_min_insitu
 #Prep data
@@ -351,7 +350,13 @@ $$\Phi(z)=1-\Phi_1z+\dots+\Phi_5z^5$$
 
 Fitting the model with the selected parameters, we get the following diagnostic:
 ```{r, echo=FALSE, include = TRUE, message=FALSE}
-mod <- sarima(ts, p=4, d=1, q=1, P=5, Q=1, D=1, S=12)
+quiet <- function(x) { 
+  sink(tempfile()) 
+  on.exit(sink()) 
+  invisible(force(x)) 
+} 
+
+mod <- quiet(sarima(ts, p=4, d=1, q=1, P=5, Q=1, D=1, S=12))
 ```
 And the following coefficients:
 ```{r echo=F, include = T}
@@ -407,18 +412,18 @@ coefs.summary
 
 
 
-## Forecasting and bootstrapping
-Bootstrapping can also be used to obtain prediction interval. The ones gained with traditional methods is often too narrow. (REFERENCE) We will use a a blocked bootstrap, we select adjunct sections the time series at random and join the selections together.
+## Forecasting with bootstrapping
+Bootstrapping can also be used to obtain prediction interval. The ones gained with traditional methods is often too narrow. [@hyndman_athanasopoulos_2018] We will use a a blocked bootstrap, we select adjunct sections the time series at random and join the selections together.
 
-The method used in this section is adapted from (REFERENCE) chapter on bootstrapping and bagging. 
+The method used in this section is adapted from Hyndman and Athanasopoulos's  bootstrapping and bagging chapter. 
 
-```{r include=F, eval=F}
+```{r include=F, echo=F}
 # An example of how bootstrapped series would look like:
 ts.bootstrap <- bld.mbb.bootstrap(monthly_flask2$CO2_filled[-1], 100) %>%
   as.data.frame() %>% ts(start=c(1960,2), frequency=12)
 ```
 
-```{r include=T}
+```{r include=T, eval=F}
 autoplot(ts.bootstrap, colour=TRUE) +
   autolayer(ts, colour=FALSE) + guides(colour="none")
   ylab("Bootstrapped series") 
@@ -458,7 +463,7 @@ fc.quant <- structure(list(
     level=95),
   class="forecast")
 ```
-```{r echo=FALSE, include=T}
+```{r echo=FALSE, include=T, 	fig.height = 4.3}
 ts.plot(ts, fc.quant$lower, fc.quant$upper, fc.quant$mean, gpars=list(xlab="Year", ylab="CO2"), col=c("black", "blue", "blue"),xlim=c(1990,2050), main="Modelled flask CO2 levels")
 
 ts.plot(ts, fc.quant$lower, fc.quant$upper, fc.quant$mean, gpars=list(xlab="Year", ylab="CO2"), col=c("black", "blue", "blue"),xlim=c(2030,2045),ylim=c(440,460), main="Modelled flask CO2 levels")
@@ -474,8 +479,10 @@ fc.quant$upper
 
 
 # Discussion and Conclusion
-The model seem to predict an increase of the co2 levels in the next few years, and the data seems to fit the model assumptions. And seem to be quite confident on its predictions. If we follow the same development as today, and if we assume the model assumption to be true, we will at upper 97.5% in confidence interval reach 450ppm CO2 in 2035, and will at lower 0.025% reach 450ppm   in 2038.
-
+The model seem to predict an increase of the CO2 levels in the next few years, and the data seems to fit the model assumptions. If we follow the same development as today, and if we assume the model assumption to be true, we will at upper 97.5% in confidence interval reach 450ppm CO2 in 2035, and will at lower 0.025% reach 450ppm in 2038.
 
 # References
+
+
+C. D. Keeling, S. C. Piper, R. B. Bacastow, M. Wahlen, T. P. Whorf, M. Heimann, and H. A. Meijer, *Exchanges of atmospheric CO2 and 13CO2 with the terrestrial biosphere and oceans from 1978 to 2000.* I. Global aspects, SIO Reference Series , No. 01-06, Scripps Institution of Oceanography, San Diego, 88 pages, 2001.
 
